@@ -392,19 +392,40 @@ PPT에서 사진만 잘라 배치하기 쉽도록 머리카락과 어깨의 경�
   </div>
 
   <script>
-    function copyPrompt(id, btnElement) {
+    async function copyPrompt(id, btnElement) {
       const text = document.getElementById(id).innerText;
-      navigator.clipboard.writeText(text).then(() => {
-        const originalText = btnElement.innerHTML;
-        btnElement.innerHTML = "✅ 복사 완료!";
-        btnElement.classList.add("copied");
-        setTimeout(() => {
-          btnElement.innerHTML = originalText;
-          btnElement.classList.remove("copied");
-        }, 1500);
-      }).catch(err => {
+      let copied = false;
+      try {
+        await navigator.clipboard.writeText(text);
+        copied = true;
+      } catch (err) {
+        const field = document.createElement("textarea");
+        field.value = text;
+        field.setAttribute("readonly", "");
+        field.style.cssText = "position:fixed;left:-9999px;top:0;opacity:0;";
+        document.body.appendChild(field);
+        field.focus();
+        field.select();
+        field.setSelectionRange(0, field.value.length);
+        try {
+          copied = document.execCommand("copy");
+        } catch (fallbackError) {
+          copied = false;
+        } finally {
+          field.remove();
+          btnElement.focus({ preventScroll: true });
+        }
+      }
+      if (!copied) {
         alert("복사에 실패했습니다. 텍스트를 직접 길게 눌러 복사해 주세요.");
-      });
+        return;
+      }
+      btnElement.innerHTML = "✅ 복사 완료!";
+      btnElement.classList.add("copied");
+      setTimeout(() => {
+        btnElement.innerHTML = "📋 복사하기";
+        btnElement.classList.remove("copied");
+      }, 1500);
     }
   </script>
 </body>
